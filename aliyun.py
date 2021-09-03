@@ -23,7 +23,6 @@ class AliyunDns:
     __appid = ''
     __appsecret = ''
     __logger = logging.getLogger("logger")
-    __topLevelDominList = ['com', 'net', 'org', 'gov', 'edu', 'mil', 'biz', 'name', 'info', 'mobi']
 
     def __init__(self, appid, appsecret):
         self.__appid = appid
@@ -86,7 +85,7 @@ class AliyunDns:
         self.__logger.info('Signature'+ str(finalParams['Signature']))
         # get final url
         url = '%s/?%s' % (self.__endpoint, urllib.urlencode(finalParams))
-        # print(url)
+        print(url)
 
         request = urllib2.Request(url)
         try:
@@ -116,21 +115,24 @@ class AliyunDns:
         }
         self.__request(params)
 
-    def addLetsencryptDomainRecord(self, domain, value):
+    def __splitDomain(self, domain):
         parts = domain.split('.')
         ln = len(parts)
-        if len > 3 or parts[ln-1] not in __topLevelDominList:
-            self.addDomainRecord(".".join(parts[ln - 2:ln]), self.__letsencryptSubDomain + '.' + ".".join(parts[0:ln - 2]), value)
-        else:
-            self.addDomainRecord(domain, self.__letsencryptSubDomain, value)
+        topLevelDominList = ['com', 'net', 'org', 'gov', 'edu', 'mil', 'biz', 'name', 'info', 'mobi']
+        mainSize = 3 if parts[ln-2] in topLevelDominList else 2
+        if ln > mainSize: #sub domain
+            rr = self.__letsencryptSubDomain + '.' + ".".join(parts[0:ln - mainSize])
+            return [".".join(parts[ln - mainSize:ln]), rr]
+        else: #main domain
+            return [domain, self.__letsencryptSubDomain]
+
+    def addLetsencryptDomainRecord(self, domain, value):
+        domains = self.__splitDomain(domain)
+        self.addDomainRecord(domains[0], domains[1], value)
 
     def deleteLetsencryptDomainRecord(self, domain):
-        parts = domain.split('.')
-        ln = len(parts)
-        if len > 3 or parts[ln-1] not in __topLevelDominList:
-            self.deleteSubDomainRecord(".".join(parts[ln - 2:ln]), self.__letsencryptSubDomain + '.' + ".".join(parts[0:ln - 2]))
-        else:
-            self.deleteSubDomainRecord(domain, self.__letsencryptSubDomain)
+        domains = self.__splitDomain(domain)
+        self.deleteSubDomainRecord(domains[0], domains[1])
 
     def toString(self):
         print('AliyunDns[appid='+self.__appid +
