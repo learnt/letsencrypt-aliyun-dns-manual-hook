@@ -23,6 +23,7 @@ class AliyunDns:
     __appid = ''
     __appsecret = ''
     __logger = logging.getLogger("logger")
+    __topLevelDominList = ['com', 'net', 'org', 'gov', 'edu', 'mil', 'biz', 'name', 'info', 'mobi']
 
     def __init__(self, appid, appsecret):
         self.__appid = appid
@@ -118,7 +119,7 @@ class AliyunDns:
     def addLetsencryptDomainRecord(self, domain, value):
         parts = domain.split('.')
         ln = len(parts)
-        if ln > 2 and not domain.endswith(".cn"):
+        if len > 3 or parts[ln-1] not in __topLevelDominList:
             self.addDomainRecord(".".join(parts[ln - 2:ln]), self.__letsencryptSubDomain + '.' + ".".join(parts[0:ln - 2]), value)
         else:
             self.addDomainRecord(domain, self.__letsencryptSubDomain, value)
@@ -126,7 +127,7 @@ class AliyunDns:
     def deleteLetsencryptDomainRecord(self, domain):
         parts = domain.split('.')
         ln = len(parts)
-        if ln > 2 and not domain.endswith(".cn"):
+        if len > 3 or parts[ln-1] not in __topLevelDominList:
             self.deleteSubDomainRecord(".".join(parts[ln - 2:ln]), self.__letsencryptSubDomain + '.' + ".".join(parts[0:ln - 2]))
         else:
             self.deleteSubDomainRecord(domain, self.__letsencryptSubDomain)
